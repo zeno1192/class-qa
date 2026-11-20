@@ -1,5 +1,6 @@
+<% const displayedNumber = formatPostNumber(number); %>
 <p class="post-meta">
-  <a class="post-number" href="#post-<%= number %>" aria-label="投稿 <%= number %> へのリンク"><%= number %></a>
+  <a class="post-number" href="#post-<%= number %>" aria-label="投稿 <%= displayedNumber %> へのリンク"><%= displayedNumber %></a>
   <strong><%= author %></strong>
   <time datetime="<%= createdAt.toISOString() %>"><%= createdAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) %></time>
 </p>

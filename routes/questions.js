@@ -2,6 +2,7 @@ const express = require("express");
 const prisma = require("../lib/prisma");
 const { readText, readId, notFound } = require("../lib/http");
 const { readQuestionForm, questionError } = require("../lib/question-fields");
+const { readPostNumber } = require("../lib/post-number");
 const { renderQuestionThread } = require("../lib/question-thread");
 
 const router = express.Router();
@@ -37,7 +38,7 @@ router.get("/questions/:id", function (req, res) {
   const id = readId(req.params.id);
   if (!id) return notFound(res);
 
-  return renderQuestionThread(res, id, { replyNumber: readId(req.query.reply) });
+  return renderQuestionThread(res, id, { replyNumber: readPostNumber(req.query.reply) });
 });
 
 router.get("/questions/:id/edit", async function (req, res) {

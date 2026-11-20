@@ -13,7 +13,7 @@
   <%- include("post-meta", { number: 1, author: question.author, createdAt: question.createdAt }) %>
   <%- include("post-text", { body: question.body, postNumbers }) %>
   <div class="actions post-actions">
-    <a href="/questions/<%= question.id %>?reply=1#reply-form">返信</a>
+    <a href="/questions/<%= question.id %>?reply=<%= formatPostNumber(1) %>#reply-form">返信</a>
     <a href="/questions/<%= question.id %>/edit">質問を編集</a>
     <a class="danger" href="/questions/<%= question.id %>/delete">質問を削除</a>
     <form action="/questions/<%= question.id %>/status" method="post">
@@ -29,11 +29,11 @@
   <% } else { %>
     <div class="thread-replies">
       <% for (const answer of question.answers) { %>
-        <article class="thread-post" id="post-<%= answer.postNumber %>" aria-label="回答 <%= answer.postNumber %>">
+        <article class="thread-post" id="post-<%= answer.postNumber %>" aria-label="回答 <%= formatPostNumber(answer.postNumber) %>">
           <%- include("post-meta", { number: answer.postNumber, author: answer.author, createdAt: answer.createdAt }) %>
           <%- include("post-text", { body: answer.body, postNumbers }) %>
           <div class="actions post-actions">
-            <a href="/questions/<%= question.id %>?reply=<%= answer.postNumber %>#reply-form">返信</a>
+            <a href="/questions/<%= question.id %>?reply=<%= formatPostNumber(answer.postNumber) %>#reply-form">返信</a>
             <form action="/questions/<%= question.id %>/answers/<%= answer.id %>/delete" method="post"
               onsubmit="return confirm('この回答を削除しますか？')">
               <button class="text-button danger">回答を削除</button>

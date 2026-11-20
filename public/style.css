@@ -65,7 +65,7 @@ button, .button { display: inline-flex; align-items: center; cursor: pointer; te
 .thread-post { padding: 1rem 1.15rem; scroll-margin-top: 1rem; }
 .thread-post:target { background: #eaf3ff; }
 .post-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .65rem; color: #49586e; font-size: .88rem; }
-.post-number { min-width: 1.6rem; color: #172c47; font-weight: 750; font-variant-numeric: tabular-nums; }
+.post-number { min-width: 4ch; color: #172c47; font-weight: 750; font-variant-numeric: tabular-nums; }
 .post-actions { gap: .4rem 1rem; font-size: .9rem; }
 .text-button { min-height: 0; padding: 0; border: 0; color: var(--accent); background: transparent; text-decoration: underline; }
 .text-button.danger { color: #9a2626; }
