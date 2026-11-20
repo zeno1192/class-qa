@@ -1,0 +1,8 @@
+<% const parts = body.split(/((?:>>|＞＞)[1-9][0-9]*)/); -%>
+<p class="post-body"><% for (const part of parts) { -%>
+<% const number = /^(?:>>|＞＞)/.test(part) ? Number(part.slice(2)) : null; -%>
+<% if (postNumbers.has(number)) { -%>
+<a href="#post-<%= number %>"><%= part %></a><% } else { -%>
+<%= part %><% } -%>
+<% } -%>
+</p>

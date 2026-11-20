@@ -1,38 +1,54 @@
 <%- include("header", { title: question.title }) %>
-<a class="back" href="/">← 質問一覧</a>
-<article class="panel">
-  <%- include("question-meta", { question }) %>
-  <h1><%= question.title %></h1>
-  <p class="muted"><%= question.author %> · <time datetime="<%= question.createdAt.toISOString() %>"><%= question.createdAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) %></time></p>
-  <p class="post-body"><%= question.body %></p>
-  <div class="actions">
-    <a class="button" href="/questions/<%= question.id %>/edit">編集</a>
-    <a class="button danger" href="/questions/<%= question.id %>/delete">質問を削除</a>
+<a class="back" href="/">← スレッド一覧</a>
+<%- include("question-meta", { question }) %>
+<h1><%= question.title %></h1>
+<nav class="thread-nav" aria-label="スレッド内の移動">
+  <a href="#post-1">最初の質問</a>
+  <% if (question.answers.length) { %>
+    <a href="#post-<%= question.answers.at(-1).postNumber %>">最新の回答</a>
+  <% } %>
+  <a href="#reply-form">書き込む</a>
+</nav>
+<article class="panel thread-post" id="post-1" aria-label="質問">
+  <%- include("post-meta", { number: 1, author: question.author, createdAt: question.createdAt }) %>
+  <%- include("post-text", { body: question.body, postNumbers }) %>
+  <div class="actions post-actions">
+    <a href="/questions/<%= question.id %>?reply=1#reply-form">返信</a>
+    <a href="/questions/<%= question.id %>/edit">質問を編集</a>
+    <a class="danger" href="/questions/<%= question.id %>/delete">質問を削除</a>
     <form action="/questions/<%= question.id %>/status" method="post">
-      <button name="resolved" value="<%= !question.resolved %>"><%= question.resolved ? "未解決に戻す" : "解決済みにする" %></button>
+      <button class="text-button" name="resolved" value="<%= !question.resolved %>"><%= question.resolved ? "未解決に戻す" : "解決済みにする" %></button>
     </form>
   </div>
 </article>
 
 <section id="answers">
   <h2>回答 <%= question.answers.length %> 件</h2>
-  <% if (question.answers.length === 0) { %><p>まだ回答がありません。</p><% } %>
-  <% for (const answer of question.answers) { %>
-    <article class="panel answer">
-      <p class="muted"><%= answer.author %> · <time datetime="<%= answer.createdAt.toISOString() %>"><%= answer.createdAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) %></time></p>
-      <p class="post-body"><%= answer.body %></p>
-      <form action="/questions/<%= question.id %>/answers/<%= answer.id %>/delete" method="post"
-        onsubmit="return confirm('この回答を削除しますか？')">
-        <button class="danger">回答を削除</button>
-      </form>
-    </article>
+  <% if (question.answers.length === 0) { %>
+    <p>まだ回答がありません。</p>
+  <% } else { %>
+  <div class="thread-replies">
+    <% for (const answer of question.answers) { %>
+      <article class="thread-post" id="post-<%= answer.postNumber %>" aria-label="回答 <%= answer.postNumber %>">
+        <%- include("post-meta", { number: answer.postNumber, author: answer.author, createdAt: answer.createdAt }) %>
+        <%- include("post-text", { body: answer.body, postNumbers }) %>
+        <div class="actions post-actions">
+          <a href="/questions/<%= question.id %>?reply=<%= answer.postNumber %>#reply-form">返信</a>
+          <form action="/questions/<%= question.id %>/answers/<%= answer.id %>/delete" method="post"
+            onsubmit="return confirm('この回答を削除しますか？')">
+            <button class="text-button danger">回答を削除</button>
+          </form>
+        </div>
+      </article>
+    <% } %>
+  </div>
   <% } %>
 </section>
-<section>
-  <h2>回答する</h2>
+<section id="reply-form">
+  <h2>回答を書き込む</h2>
   <form class="panel fields" action="/questions/<%= question.id %>/answers" method="post">
     <label>回答者名 <input name="author" maxlength="40" required></label>
-    <label>回答内容 <textarea name="body" rows="5" maxlength="2000" required></textarea></label>
+    <label>回答内容 <textarea name="body" rows="5" maxlength="2000" required><% if (replyTo) { %><%= replyTo + "\n" %><% } %></textarea></label>
     <div class="actions"><button class="primary">回答を投稿</button></div>
   </form>
 </section>

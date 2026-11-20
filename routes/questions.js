@@ -39,7 +39,7 @@ function questionError(question) {
 }
 
 function readId(value) {
-  if (!/^[1-9][0-9]*$/.test(value)) return null;
+  if (typeof value !== "string" || !/^[1-9][0-9]*$/.test(value)) return null;
   const id = Number(value);
   return id <= 2147483647 ? id : null;
 }
@@ -112,11 +112,15 @@ router.get("/questions/:id", async function (req, res) {
 
   const question = await prisma.question.findUnique({
     where: { id },
-    include: { answers: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] } },
+    include: { answers: { orderBy: { postNumber: "asc" } } },
   });
   if (!question) return notFound(res);
 
-  res.render("question", { question });
+  const postNumbers = new Set([1, ...question.answers.map((answer) => answer.postNumber)]);
+  const replyNumber = readId(req.query.reply);
+  const replyTo = postNumbers.has(replyNumber) ? ">>" + replyNumber : "";
+
+  res.render("question", { question, postNumbers, replyTo });
 });
 
 router.get("/questions/:id/edit", async function (req, res) {
@@ -181,8 +185,17 @@ router.post("/questions/:id/answers", async function (req, res) {
     });
   }
 
-  await prisma.answer.create({ data: { questionId, author, body } });
-  res.redirect(303, "/questions/" + questionId + "#answers");
+  // 採番と回答の保存をまとめ、同時に投稿しても同じ番号にならないようにする。
+  const answer = await prisma.$transaction(async function (db) {
+    const question = await db.question.update({
+      where: { id: questionId },
+      data: { lastPostNumber: { increment: 1 } },
+    });
+    return db.answer.create({
+      data: { questionId, author, body, postNumber: question.lastPostNumber },
+    });
+  });
+  res.redirect(303, "/questions/" + questionId + "#post-" + answer.postNumber);
 });
 
 router.post("/questions/:id/answers/:answerId/delete", async function (req, res) {

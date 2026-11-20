@@ -26,7 +26,9 @@ npm start
 | Update | `POST /questions/:id/edit` の `req.params.id` が更新する質問を指す。変更後の値は `req.body` で受け取る。 | `where: { id }` で質問を選び、`prisma.question.update()` でタイトル、本文、カテゴリを書き換える。 |
 | Delete | 削除画面で確認後、`POST /questions/:id/delete` を送る。`req.params.id` が削除対象になる。 | `prisma.question.delete({ where: { id } })` を実行する。[DBの設計](prisma/schema.prisma) の `onDelete: Cascade` により、その質問の回答も同時に消える。 |
 
-一覧は `GET /` で表示します。検索条件は `req.query` で受け取り、Prisma の `where` に渡します。質問詳細では、質問とその質問に属する回答を関連付けて取得します。
+一覧は `GET /` で表示します。検索条件は `req.query` で受け取り、Prisma の `where` に渡します。質問詳細では、質問とその質問に属する回答を関連付けて取得します。質問はスレッドの投稿番号 `1` になり、回答は `2` から順に番号を持ちます。「返信」を押すと本文に `>>番号` が入力され、表示時は該当する投稿へのリンクになります。削除された番号は再利用しません。
+
+採番は、回答を保存する際に `Question.lastPostNumber` を1増やす方法です。番号の更新と回答の保存を `$transaction` でまとめているため、同時投稿でも番号が重なりません。
 
 ### 5分の録画の目安
 

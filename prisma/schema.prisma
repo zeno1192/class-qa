@@ -15,14 +15,15 @@ enum Category {
 }
 
 model Question {
-  id        Int      @id @default(autoincrement())
-  title     String
-  body      String
-  author    String
-  category  Category
-  resolved  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  answers   Answer[]
+  id             Int      @id @default(autoincrement())
+  title          String
+  body           String
+  author         String
+  category       Category
+  resolved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  lastPostNumber Int      @default(1)
+  answers        Answer[]
 }
 
 model Answer {
@@ -31,8 +32,9 @@ model Answer {
   body       String
   createdAt  DateTime @default(now())
   questionId Int
+  postNumber Int
   // 質問を削除したときは、PostgreSQL がその質問に属する回答も削除する。
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  @@index([questionId])
+  @@unique([questionId, postNumber])
 }

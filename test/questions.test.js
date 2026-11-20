@@ -76,9 +76,17 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   assert.match(await page("/?keyword=" + encodeURIComponent(marker + "_")), /条件に一致する質問はありません/);
 
   assert.equal((await post(first + "/answers", { author: " ", body: "本文" })).status, 400);
-  assert.equal((await post(first + "/answers", { author: "回答者A", body: "最初の回答" })).status, 303);
-  assert.equal((await post(first + "/answers", { author: "回答者B", body: "次の回答" })).status, 303);
-  assert.match(await page(first), /回答 2 件/);
+  const firstAnswer = await post(first + "/answers", { author: "回答者A", body: ">>1 最初の回答" });
+  assert.equal(firstAnswer.status, 303);
+  assert.equal(firstAnswer.headers.get("location"), first + "#post-2");
+  const replyForm = await page(first + "?reply=2");
+  assert.match(replyForm, /required>&gt;&gt;2/);
+  assert.doesNotMatch(await page(second + "?reply=2"), /required>&gt;&gt;2/);
+  assert.equal((await post(first + "/answers", { author: "回答者B", body: ">>2 次の回答" })).status, 303);
+  const thread = await page(first);
+  assert.match(thread, /回答 2 件/);
+  assert.match(thread, /href="#post-1">&gt;&gt;1<\/a>/);
+  assert.match(thread, /href="#post-2">&gt;&gt;2<\/a>/);
   assert.doesNotMatch(await page(second), /最初の回答|次の回答/);
   const sorted = await page("/?keyword=" + marker + "&sort=answers");
   assert.ok(sorted.indexOf(updatedTitle) < sorted.indexOf(newerTitle));
@@ -91,10 +99,18 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   assert.match(await page(first), /未解決/);
 
   const questionId = questionIds[0];
-  const answer = await prisma.answer.findFirst({ where: { questionId } });
+  const answer = await prisma.answer.findUnique({ where: { questionId_postNumber: { questionId, postNumber: 2 } } });
   assert.equal((await post(second + "/answers/" + answer.id + "/delete")).status, 404);
   assert.equal((await post(first + "/answers/" + answer.id + "/delete")).status, 303);
   assert.equal(await prisma.answer.count({ where: { questionId } }), 1);
+  assert.doesNotMatch(await page(first), /href="#post-2">&gt;&gt;2<\/a>/);
+  const simultaneousReplies = await Promise.all([
+    post(first + "/answers", { author: "回答者C", body: "同時投稿A" }),
+    post(first + "/answers", { author: "回答者D", body: "同時投稿B" }),
+  ]);
+  assert.deepEqual(simultaneousReplies.map((response) => response.status), [303, 303]);
+  assert.deepEqual(simultaneousReplies.map((response) => response.headers.get("location")).sort(),
+    [first + "#post-4", first + "#post-5"]);
   assert.match(await page(first + "/delete"), /質問を削除しますか/);
   assert.equal(await prisma.question.count({ where: { id: questionId } }), 1);
   assert.equal((await post(first + "/delete")).status, 303);

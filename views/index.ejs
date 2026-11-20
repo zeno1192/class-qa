@@ -1,5 +1,11 @@
 <%- include("header", { title: "質問一覧" }) %>
-<h1>質問一覧</h1>
+<h1>質問スレッド一覧</h1>
+<nav class="category-nav" aria-label="カテゴリ">
+  <a href="/" <% if (!category) { %>aria-current="page"<% } %>>すべて</a>
+  <% for (const [value, label] of Object.entries(categories)) { %>
+    <a href="/?category=<%= value %>" <% if (category === value) { %>aria-current="page"<% } %>><%= label %></a>
+  <% } %>
+</nav>
 <form class="panel filter" action="/" method="get" role="search">
   <label class="keyword">キーワード
     <input type="search" name="keyword" value="<%= keyword %>" maxlength="100" placeholder="タイトル・質問内容で検索">
@@ -34,14 +40,16 @@
 <p class="result-count"><%= questions.length %> 件の質問</p>
 <% if (questions.length === 0) { %>
   <p class="panel"><%= keyword || category || state ? "条件に一致する質問はありません。" : "まだ質問がありません。" %></p>
-<% } %>
+<% } else { %>
 <ul class="question-list">
   <% for (const question of questions) { %>
-    <li class="panel">
+    <li class="thread-row">
       <%- include("question-meta", { question }) %>
       <h2><a href="/questions/<%= question.id %>"><%= question.title %></a></h2>
-      <p class="muted"><%= question.author %> · 回答 <%= question._count.answers %> 件</p>
+      <p class="muted"><%= question.author %></p>
+      <span class="reply-count">回答 <%= question._count.answers %> 件</span>
     </li>
   <% } %>
 </ul>
+<% } %>
 <%- include("footer") %>
