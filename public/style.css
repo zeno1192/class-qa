@@ -19,13 +19,11 @@ section { margin-top: 2rem; }
 .container { width: min(100% - 2rem, 58rem); margin-inline: auto; }
 main { padding-block: 2rem 4rem; }
 .site-header { background: #172c47; border-bottom: 1px solid var(--border); }
-.nav, .actions, .badges { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
+.nav, .actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; }
 .nav { justify-content: space-between; padding-block: .8rem; }
 .brand { color: white; font-size: 1.25rem; font-weight: 750; text-decoration: none; }
 .panel { padding: 1rem 1.25rem; background: white; border: 1px solid var(--border); border-radius: .45rem; }
-.category-nav, .thread-nav { display: flex; flex-wrap: wrap; gap: .4rem .85rem; margin-bottom: 1rem; }
-.category-nav a { padding: .3rem .65rem; border-radius: .25rem; }
-.category-nav [aria-current="page"] { color: white; background: var(--accent); text-decoration: none; }
+.thread-nav { display: flex; flex-wrap: wrap; gap: .4rem .85rem; margin-block: .75rem 1rem; }
 .question-list { padding: 0; list-style: none; }
 .question-list, .thread-replies {
   background: white;
@@ -33,9 +31,9 @@ main { padding-block: 2rem 4rem; }
   border-radius: .45rem;
 }
 .thread-row { padding: .85rem 1.15rem; }
+.thread-row h2 { margin-top: 0; }
+.thread-row .muted { margin-bottom: 0; }
 .thread-row + .thread-row, .thread-post + .thread-post { border-top: 1px solid var(--border); }
-.reply-count { color: #49586e; font-size: .85rem; }
-.thread-row .muted { display: inline; margin-right: .8rem; }
 .filter { display: flex; flex-wrap: wrap; align-items: end; gap: .8rem; }
 .keyword { flex: 1 1 14rem; }
 .fields { display: grid; gap: 1rem; }
@@ -56,10 +54,7 @@ button, .button { display: inline-flex; align-items: center; cursor: pointer; te
 .danger, .error { color: #9a2626; }
 .filled { color: white; background: #9a2626; border-color: #9a2626; }
 :focus-visible { outline: 3px solid #176a91; outline-offset: 2px; }
-.badge { padding: .1em .65em; border-radius: 1em; background: #e7edf5; font-size: .85rem; }
-.badge.open { color: #783b09; background: #faecd7; }
-.badge.resolved { color: #135337; background: #dcf2e5; }
-.muted, .result-count { color: #49586e; }
+.muted, .result-count { color: #49586e; font-size: .9rem; }
 .result-count { margin-top: 1.25rem; }
 .post-body { white-space: pre-wrap; margin-block: 1rem; }
 .thread-post { padding: 1rem 1.15rem; scroll-margin-top: 1rem; }

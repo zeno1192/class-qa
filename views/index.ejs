@@ -1,10 +1,5 @@
 <%- include("header", { title: "質問一覧" }) %>
 <h1>質問スレッド一覧</h1>
-<nav class="category-nav" aria-label="カテゴリ">
-  <% for (const link of categoryLinks) { %>
-    <a href="<%= link.href %>" <% if (category === link.value) { %>aria-current="page"<% } %>><%= link.label %></a>
-  <% } %>
-</nav>
 <form class="panel filter" action="/" method="get" role="search">
   <label class="keyword">キーワード
     <input type="search" name="keyword" value="<%= keyword %>" maxlength="100" placeholder="タイトル・質問内容で検索">
@@ -43,10 +38,11 @@
   <ul class="question-list">
     <% for (const question of questions) { %>
       <li class="thread-row">
-        <%- include("question-meta", { question }) %>
         <h2><a href="/questions/<%= question.id %>"><%= question.title %></a></h2>
-        <p class="muted"><%= question.author %></p>
-        <span class="reply-count">回答 <%= question._count.answers %> 件</span>
+        <p class="muted">
+          <%= categories[question.category] %> ・ <%= question.resolved ? "解決済み" : "未解決" %> ・
+          <%= question.author %> ・ 回答 <%= question._count.answers %> 件
+        </p>
       </li>
     <% } %>
   </ul>

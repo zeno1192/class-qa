@@ -1,0 +1,15 @@
+<%
+const displayedNumber = formatPostNumber(number);
+const parts = splitPostBody(post.body, postNumbers);
+-%>
+<p class="post-meta">
+  <a class="post-number" href="#post-<%= number %>" aria-label="投稿 <%= displayedNumber %> へのリンク"><%= displayedNumber %></a>
+  <strong><%= post.author %></strong>
+  <time datetime="<%= post.createdAt.toISOString() %>"><%= post.createdAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }) %></time>
+</p>
+<p class="post-body"><% for (const part of parts) { -%>
+<% if (part.linkNumber) { -%>
+<a href="#post-<%= part.linkNumber %>"><%= part.text %></a><% } else { -%>
+<%= part.text %><% } -%>
+<% } -%>
+</p>

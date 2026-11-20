@@ -1,7 +1,7 @@
 const express = require("express");
 const prisma = require("../lib/prisma");
 const { readText } = require("../lib/http");
-const { categories, validCategory } = require("../lib/question-fields");
+const { validCategory } = require("../lib/question-fields");
 
 const router = express.Router();
 
@@ -35,18 +35,7 @@ router.get("/", async function (req, res) {
     include: { _count: { select: { answers: true } } },
   });
 
-  const categoryLinks = [["", "すべて"], ...Object.entries(categories)].map(([value, label]) => {
-    const query = new URLSearchParams();
-    if (keyword) query.set("keyword", keyword);
-    if (value) query.set("category", value);
-    if (state) query.set("state", state);
-    if (sort === "answers") query.set("sort", sort);
-
-    const queryString = query.toString();
-    return { value, label, href: queryString ? "/?" + queryString : "/" };
-  });
-
-  res.render("index", { questions, keyword, category, state, sort, categoryLinks });
+  res.render("index", { questions, keyword, category, state, sort });
 });
 
 module.exports = router;

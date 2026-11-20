@@ -26,8 +26,10 @@ npm start
 | --- | --- | --- |
 | 質問一覧、検索、絞り込み、並べ替え | [routes/question-list.js](routes/question-list.js) | [一覧](views/index.ejs) |
 | 質問の登録・編集・削除、解決状態の変更 | [routes/questions.js](routes/questions.js) | [質問フォーム](views/question-form.ejs)、[削除確認](views/question-delete.ejs) |
-| スレッド詳細と返信リンク | [lib/question-thread.js](lib/question-thread.js) | [質問詳細](views/question.ejs)、[投稿本文](views/post-text.ejs) |
-| 回答の登録・削除 | [routes/answers.js](routes/answers.js) | [回答フォーム](views/answer-form.ejs) |
+| スレッド詳細と返信リンク | [lib/question-thread.js](lib/question-thread.js) | [質問詳細](views/question.ejs)、[投稿の共通表示](views/post.ejs) |
+| 回答の登録・削除 | [routes/answers.js](routes/answers.js) | [質問詳細の末尾](views/question.ejs) |
+
+`views` では画面ごとにファイルを分けています。ヘッダー、フッター、質問と回答に共通する投稿表示は、それぞれ `header.ejs`、`footer.ejs`、`post.ejs` にあります。
 
 画面を表示する操作は `GET`、データを変更する操作は `POST` で受け付けます。Prisma が使うテーブルの設計は [schema.prisma](prisma/schema.prisma) にあります。
 

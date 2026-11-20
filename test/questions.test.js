@@ -115,9 +115,13 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
 
   assert.equal((await post(first + "/status", { resolved: "true" })).status, 303);
   assert.match(await page(first), /解決済み/);
-  const resolved = await page("/?keyword=" + marker + "&state=resolved");
+  const resolved = await page("/?keyword=" + marker + "&category=EXTRACURRICULAR&state=resolved&sort=answers");
   assert.ok(resolved.includes(updatedTitle) && !resolved.includes(newerTitle));
-  assert.ok(resolved.includes('href="/?keyword=' + marker + '&amp;category=OTHER&amp;state=resolved"'));
+  assert.equal((resolved.match(/name="category"/g) || []).length, 1);
+  assert.match(resolved, /value="EXTRACURRICULAR" selected/);
+  assert.match(resolved, /value="resolved" selected/);
+  assert.match(resolved, /value="answers" selected/);
+  assert.ok(resolved.includes('value="' + marker + '"'));
   assert.equal((await post(first + "/status", { resolved: "false" })).status, 303);
   assert.match(await page(first), /未解決/);
 
