@@ -75,7 +75,16 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   assert.ok(results.includes(updatedTitle) && !results.includes(newerTitle));
   assert.match(await page("/?keyword=" + encodeURIComponent(marker + "_")), /条件に一致する質問はありません/);
 
-  assert.equal((await post(first + "/answers", { author: " ", body: "本文" })).status, 400);
+  const answerDraft = ">>1 書きかけの回答";
+  const rejectedAnswer = await post(first + "/answers", { author: " ", body: answerDraft });
+  assert.equal(rejectedAnswer.status, 400);
+  const answerErrorPage = await rejectedAnswer.text();
+  assert.match(answerErrorPage, /role="alert">回答者名を/);
+  assert.match(answerErrorPage, />&gt;&gt;1 書きかけの回答<\/textarea>/);
+  assert.match(answerErrorPage, /回答 0 件/);
+
+  const missingQuestionAnswer = await post(missing + "/answers", { author: "", body: "" });
+  assert.equal(missingQuestionAnswer.status, 404);
   const firstAnswer = await post(first + "/answers", { author: "回答者A", body: ">>1 最初の回答" });
   assert.equal(firstAnswer.status, 303);
   assert.equal(firstAnswer.headers.get("location"), first + "#post-2");
@@ -95,6 +104,7 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   assert.match(await page(first), /解決済み/);
   const resolved = await page("/?keyword=" + marker + "&state=resolved");
   assert.ok(resolved.includes(updatedTitle) && !resolved.includes(newerTitle));
+  assert.ok(resolved.includes('href="/?keyword=' + marker + '&amp;category=OTHER&amp;state=resolved"'));
   assert.equal((await post(first + "/status", { resolved: "false" })).status, 303);
   assert.match(await page(first), /未解決/);
 

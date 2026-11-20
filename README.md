@@ -2,6 +2,8 @@
 
 授業や自習で出た疑問を投稿して、回答を共有するサイトです。Node.js と Express がリクエストを受け取り、Prisma が PostgreSQL を操作し、EJS が画面を表示します。
 
+[公開サイト](https://class-qa-theta.vercel.app/)
+
 ## 手元で起動する
 
 Node.js 22 と PostgreSQL を用意し、次を実行します。`class_qa` がすでにある場合は作成コマンドを省きます。`.env` の `YOUR_POSTGRES_USER` を PostgreSQL のユーザー名に置き換えます。パスワードが必要なら両方の接続先に設定します。
@@ -16,25 +18,50 @@ npm start
 
 ブラウザーで [http://localhost:3000](http://localhost:3000) を開きます。`npm run db:deploy` は `prisma/migrations/` の履歴からテーブルを作り、適用済みの変更を飛ばします。
 
+## 機能ごとのファイル
+
+画面のリンクやフォームを押すと、ブラウザーが URL にリクエストを送ります。[app.js](app.js) が Express のルーターを登録しています。どのリクエストを扱うかは、各ファイルの `router.get` または `router.post` で確認できます。
+
+| 見たい機能 | サーバー側 | 対応する画面 |
+| --- | --- | --- |
+| 質問一覧、検索、絞り込み、並べ替え | [routes/question-list.js](routes/question-list.js) | [一覧](views/index.ejs) |
+| 質問の登録・編集・削除、解決状態の変更 | [routes/questions.js](routes/questions.js) | [質問フォーム](views/question-form.ejs)、[削除確認](views/question-delete.ejs) |
+| スレッド詳細と返信リンク | [lib/question-thread.js](lib/question-thread.js) | [質問詳細](views/question.ejs)、[投稿本文](views/post-text.ejs) |
+| 回答の登録・削除 | [routes/answers.js](routes/answers.js) | [回答フォーム](views/answer-form.ejs) |
+
+画面を表示する操作は `GET`、データを変更する操作は `POST` で受け付けます。Prisma が使うテーブルの設計は [schema.prisma](prisma/schema.prisma) にあります。
+
 ## 解説動画で開くコード
 
-[質問の処理](routes/questions.js) に Create、Update、Delete の順でコメントがあります。画面で操作しながら次の流れを自分の言葉で説明できます。
+登録、更新、削除の処理はすべて [routes/questions.js](routes/questions.js) にあります。たとえば質問の ID が `12` の場合、編集には `POST /questions/12/edit` が送られます。
 
-| 操作 | ブラウザーからサーバー | サーバーからデータベース |
-| --- | --- | --- |
-| Create | 質問フォームが `POST /questions` に送信する。`express.urlencoded()` が送信内容を読み取り、フォームの `name` に対応する値を `req.body` から取得する。 | 必須項目を確認し、`prisma.question.create({ data: … })` で保存する。保存後に新しい質問の ID を使って詳細へ移動する。 |
-| Update | `POST /questions/:id/edit` の `req.params.id` が更新する質問を指す。変更後の値は `req.body` で受け取る。 | `where: { id }` で質問を選び、`prisma.question.update()` でタイトル、本文、カテゴリを書き換える。 |
-| Delete | 削除画面で確認後、`POST /questions/:id/delete` を送る。`req.params.id` が削除対象になる。 | `prisma.question.delete({ where: { id } })` を実行する。[DBの設計](prisma/schema.prisma) の `onDelete: Cascade` により、その質問の回答も同時に消える。 |
+### Create（登録）
 
-一覧は `GET /` で表示します。検索条件は `req.query` で受け取り、Prisma の `where` に渡します。質問詳細では、質問とその質問に属する回答を関連付けて取得します。質問はスレッドの投稿番号 `1` になり、回答は `2` から順に番号を持ちます。「返信」を押すと本文に `>>番号` が入力され、表示時は該当する投稿へのリンクになります。削除された番号は再利用しません。
+1. [質問フォーム](views/question-form.ejs) で入力した値が `POST /questions` に送られます。`app.js` の `express.urlencoded()` が読み取るので、投稿者名は `req.body.author`、タイトルは `req.body.title` で取得できます。フォームの `name` と同じ名前です。
+2. `readQuestionForm()` と `questionError()` で値を読み取り、必須項目、文字数、カテゴリを確認します。入力に問題があればフォームを再表示します。
+3. `prisma.question.create({ data: … })` で保存します。保存結果の `savedQuestion.id` を使い、新しく作った質問の詳細へ移動します。
 
-採番は、回答を保存する際に `Question.lastPostNumber` を1増やす方法です。番号の更新と回答の保存を `$transaction` でまとめているため、同時投稿でも番号が重なりません。
+### Update（更新）
+
+1. 編集フォームを送ると `POST /questions/12/edit` に届き、URL の `12` は `req.params.id` から取得できます。`readId()` で数値に変換します。
+2. 変更後の値は `req.body` から受け取ります。`prisma.question.update({ where: { id }, data: question })` の `where` が対象を指定し、`data` が書き換える項目を指定します。編集したタイトル・本文・カテゴリが保存されます。
+
+### Delete（削除）
+
+1. 「質問を削除」を押すと `GET /questions/12/delete` で確認画面を表示します。「削除する」を押すと同じ URL に `POST` が送られます。
+2. `prisma.question.delete({ where: { id } })` で URL が指す質問を削除します。[DBの設計](prisma/schema.prisma) にある `onDelete: Cascade` によって、その質問に紐づく回答も PostgreSQL が同時に削除します。
+
+### スレッドと回答
+
+質問を `1` とし、回答は `2` から順に番号を付けます。「返信」を押すと `?reply=番号` が URL に入り、同じスレッドにその番号があれば、回答フォームに `>>番号` が入ります。投稿本文を表示するときは、その番号を対応する投稿へのリンクにします。
+
+回答を保存するときは、質問の `lastPostNumber` を1増やしてから、その番号で回答を作ります。`$transaction` でこの2つをまとめるため、同時に投稿しても番号が重なりません。削除された番号は再利用しません。回答フォームに不備がある場合は、入力値とエラーをスレッド上に表示します。
 
 ### 5分の録画の目安
 
-1. GitHub でリポジトリを開き、公開サイトで質問を投稿します（約1分）。
-2. `question-form.ejs` の `name` と、`routes/questions.js` の `req.body`、`create` の対応を示します（約1分）。
-3. 質問を編集し、URL の ID が `req.params.id` と `where: { id }` にどう渡るかを説明します（約1分）。
+1. GitHub でリポジトリを開き、公開サイトの質問フォームを見せます（約1分）。
+2. 質問を投稿し、フォームの `name` → `req.body` → `create` を示します（約1分）。
+3. 質問を編集し、URL → `req.params.id` → `where` と、変更内容が入る `data` を示します（約1分）。
 4. 回答を1件付けた質問を削除し、確認画面、`delete`、`onDelete: Cascade` の役割を示します（約2分）。
 
 ## テスト
