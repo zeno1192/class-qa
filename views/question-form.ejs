@@ -1,0 +1,27 @@
+<%- include("header", { title: editing ? "質問を編集" : "質問する" }) %>
+<a class="back" href="<%= editing ? '/questions/' + question.id : '/' %>">← 戻る</a>
+<h1><%= editing ? "質問を編集" : "質問する" %></h1>
+<form class="panel fields" action="<%= editing ? '/questions/' + question.id + '/edit' : '/questions' %>" method="post">
+  <% if (error) { %><p class="error" role="alert"><%= error %></p><% } %>
+  <% if (!editing) { %>
+    <label>投稿者名
+      <input name="author" value="<%= question.author %>" maxlength="40" required>
+    </label>
+  <% } %>
+  <label>タイトル
+    <input name="title" value="<%= question.title %>" maxlength="100" required>
+  </label>
+  <label>カテゴリ
+    <select name="category" required>
+      <option value="">選択してください</option>
+      <% for (const [value, label] of Object.entries(categories)) { %>
+        <option value="<%= value %>" <%= value === question.category ? "selected" : "" %>><%= label %></option>
+      <% } %>
+    </select>
+  </label>
+  <label>質問内容
+    <textarea name="body" rows="7" maxlength="2000" required><%= question.body %></textarea>
+  </label>
+  <div class="actions"><button class="primary"><%= editing ? "変更を保存" : "質問を投稿" %></button></div>
+</form>
+<%- include("footer") %>

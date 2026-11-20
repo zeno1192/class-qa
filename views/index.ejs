@@ -1,0 +1,47 @@
+<%- include("header", { title: "質問一覧" }) %>
+<h1>質問一覧</h1>
+<form class="panel filter" action="/" method="get" role="search">
+  <label class="keyword">キーワード
+    <input type="search" name="keyword" value="<%= keyword %>" maxlength="100" placeholder="タイトル・質問内容で検索">
+  </label>
+  <label>カテゴリ
+    <select name="category">
+      <option value="">すべて</option>
+      <% for (const [value, label] of Object.entries(categories)) { %>
+        <option value="<%= value %>" <%= value === category ? "selected" : "" %>><%= label %></option>
+      <% } %>
+    </select>
+  </label>
+  <label>解決状態
+    <select name="state">
+      <option value="">すべて</option>
+      <option value="open" <%= state === "open" ? "selected" : "" %>>未解決</option>
+      <option value="resolved" <%= state === "resolved" ? "selected" : "" %>>解決済み</option>
+    </select>
+  </label>
+  <label>並べ替え
+    <select name="sort">
+      <option value="newest">新しい順</option>
+      <option value="answers" <%= sort === "answers" ? "selected" : "" %>>回答が多い順</option>
+    </select>
+  </label>
+  <div class="actions">
+    <button class="primary">検索</button>
+    <% if (keyword || category || state || sort === "answers") { %><a href="/">条件をクリア</a><% } %>
+  </div>
+</form>
+
+<p class="result-count"><%= questions.length %> 件の質問</p>
+<% if (questions.length === 0) { %>
+  <p class="panel"><%= keyword || category || state ? "条件に一致する質問はありません。" : "まだ質問がありません。" %></p>
+<% } %>
+<ul class="question-list">
+  <% for (const question of questions) { %>
+    <li class="panel">
+      <%- include("question-meta", { question }) %>
+      <h2><a href="/questions/<%= question.id %>"><%= question.title %></a></h2>
+      <p class="muted"><%= question.author %> · 回答 <%= question._count.answers %> 件</p>
+    </li>
+  <% } %>
+</ul>
+<%- include("footer") %>

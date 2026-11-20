@@ -1,0 +1,10 @@
+<%- include("header", { title: "削除の確認" }) %>
+<h1>質問を削除しますか？</h1>
+<div class="panel">
+  <p>「<%= question.title %>」と、この質問への回答がすべて削除されます。</p>
+  <form class="actions" action="/questions/<%= question.id %>/delete" method="post">
+    <a class="button" href="/questions/<%= question.id %>">キャンセル</a>
+    <button class="danger filled">削除する</button>
+  </form>
+</div>
+<%- include("footer") %>

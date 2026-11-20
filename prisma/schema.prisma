@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+enum Category {
+  CLASS
+  EXTRACURRICULAR
+  OTHER
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  author    String
+  category  Category
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  answers   Answer[]
+}
+
+model Answer {
+  id         Int      @id @default(autoincrement())
+  author     String
+  body       String
+  createdAt  DateTime @default(now())
+  questionId Int
+  // 質問を削除したときは、PostgreSQL がその質問に属する回答も削除する。
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}

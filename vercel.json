@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "buildCommand": "npm run db:deploy",
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index.js" }],
+  "functions": { "api/index.js": { "includeFiles": "views/**" } }
+}
