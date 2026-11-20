@@ -1,7 +1,7 @@
 const express = require("express");
 const prisma = require("../lib/prisma");
 const { readText, readId, notFound } = require("../lib/http");
-const { listCategories } = require("../lib/categories");
+const { listCategories, resolveCategoryId } = require("../lib/categories");
 const { readQuestionForm, questionError } = require("../lib/question-fields");
 const { readPostNumber } = require("../lib/post-number");
 const { renderQuestionThread } = require("../lib/question-thread");
@@ -31,8 +31,11 @@ router.post("/questions", async function (req, res) {
     });
   }
 
-  const savedQuestion = await prisma.question.create({
-    data: { ...question, author },
+  const { title, body } = question;
+  // 質問を保存できなかった場合は、追加したカテゴリも一緒に取り消す。
+  const savedQuestion = await prisma.$transaction(async function (db) {
+    const categoryId = await resolveCategoryId(db, question);
+    return db.question.create({ data: { title, body, author, categoryId } });
   });
   res.redirect(303, "/questions/" + savedQuestion.id);
 });
@@ -71,7 +74,11 @@ router.post("/questions/:id/edit", async function (req, res) {
     });
   }
 
-  await prisma.question.update({ where: { id }, data: question });
+  const { title, body } = question;
+  await prisma.$transaction(async function (db) {
+    const categoryId = await resolveCategoryId(db, question);
+    await db.question.update({ where: { id }, data: { title, body, categoryId } });
+  });
   res.redirect(303, "/questions/" + id);
 });
 

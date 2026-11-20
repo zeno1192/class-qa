@@ -10,8 +10,6 @@ router.get("/", async function (req, res) {
   const selectedCategory = readText(req.query.category);
   const categories = await listCategories();
   const category = categories.some((option) => option.id === selectedCategory) ? selectedCategory : "";
-  const categoryAdded = req.query.added === "category" && category !== "";
-  const addCategoryOpen = req.query.add === "category";
   const selectedState = readText(req.query.state);
   const state = ["open", "resolved"].includes(selectedState) ? selectedState : "";
   const sort = req.query.sort === "answers" ? "answers" : "newest";
@@ -38,9 +36,7 @@ router.get("/", async function (req, res) {
     include: { category: true, _count: { select: { answers: true } } },
   });
 
-  res.render("index", {
-    questions, categories, keyword, category, state, sort, categoryAdded, addCategoryOpen,
-  });
+  res.render("index", { questions, categories, keyword, category, state, sort });
 });
 
 module.exports = router;

@@ -31,17 +31,6 @@
   </div>
 </form>
 
-<details id="add-category" class="category-editor" <%= addCategoryOpen ? "open" : "" %>>
-  <summary>カテゴリを追加</summary>
-  <form class="actions" action="/categories" method="post">
-    <label>カテゴリ名
-      <input name="name" maxlength="40" required>
-    </label>
-    <button type="submit">追加する</button>
-  </form>
-</details>
-<% if (categoryAdded) { %><p role="status">カテゴリを追加しました。</p><% } %>
-
 <p class="result-count"><%= questions.length %> 件の質問</p>
 <% if (questions.length === 0) { %>
   <p class="panel"><%= keyword || category || state ? "条件に一致する質問はありません。" : "まだ質問がありません。" %></p>

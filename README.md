@@ -25,7 +25,7 @@ npm start
 | 見たい機能 | サーバー側 | 対応する画面 |
 | --- | --- | --- |
 | 質問一覧、検索、絞り込み、並べ替え | [routes/question-list.js](routes/question-list.js) | [一覧](views/index.ejs) |
-| カテゴリの追加 | [routes/categories.js](routes/categories.js) | [一覧のカテゴリ追加フォーム](views/index.ejs) |
+| カテゴリの追加 | [lib/categories.js](lib/categories.js) | [質問フォームのカテゴリ選択](views/question-form.ejs) |
 | 質問の登録・編集・削除、解決状態の変更 | [routes/questions.js](routes/questions.js) | [質問フォーム](views/question-form.ejs)、[削除確認](views/question-delete.ejs) |
 | スレッド詳細と返信リンク | [lib/question-thread.js](lib/question-thread.js) | [質問詳細](views/question.ejs)、[投稿の共通表示](views/post.ejs) |
 | 回答の登録・削除 | [routes/answers.js](routes/answers.js) | [質問詳細の末尾](views/question.ejs) |
@@ -36,27 +36,29 @@ npm start
 
 ## 解説動画で開くコード
 
-登録、更新、削除の処理はすべて [routes/questions.js](routes/questions.js) にあります。たとえば質問の ID が `12` の場合、編集には `POST /questions/12/edit` が送られます。
+登録、更新、削除の処理は [routes/questions.js](routes/questions.js) にあります。録画では、ブラウザーで GitHub を開いて実際のコードを映し、操作・変数・データベースの変更を自分の言葉でつなげて説明します。
 
-### Create（登録）
+### Create（登録・7点）
 
-1. [質問フォーム](views/question-form.ejs) で入力した値が `POST /questions` に送られます。`app.js` の `express.urlencoded()` が読み取るので、投稿者名は `req.body.author`、タイトルは `req.body.title` で取得できます。フォームの `name` と同じ名前です。
-2. `readQuestionForm()` と `questionError()` で値を読み取り、必須項目、文字数、カテゴリを確認します。入力に問題があればフォームを再表示します。
-3. `prisma.question.create({ data: … })` で保存します。保存結果の `savedQuestion.id` を使い、新しく作った質問の詳細へ移動します。
+1. [質問フォーム](views/question-form.ejs) が `POST /questions` に送信するところを示します。フォームの `name="title"`、`name="body"`、`name="author"`、`name="category"` が、サーバー側の `req.body` の項目名になります。[app.js](app.js) の `express.urlencoded()` がフォームの本文を読み取ります。
+2. `readQuestionForm(req.body)` でタイトル、本文、カテゴリを取り出し、`author` には投稿者名を入れます。`questionError()` などで入力を検証し、問題があれば `400` と入力済みのフォームを返します。
+3. `resolveCategoryId()` でカテゴリの ID を確定し、`db.question.create({ data: { title, body, author, categoryId } })` で PostgreSQL に質問を保存します。保存結果の `savedQuestion.id` を使って詳細ページへ移動します。
 
-### Update（更新）
+### Update（更新・7点）
 
-1. 編集フォームを送ると `POST /questions/12/edit` に届き、URL の `12` は `req.params.id` から取得できます。`readId()` で数値に変換します。
-2. 変更後の値は `req.body` から受け取ります。`prisma.question.update({ where: { id }, data: question })` の `where` が対象を指定し、`data` が書き換える項目を指定します。編集したタイトル・本文・カテゴリが保存されます。
+1. 例として質問の ID が `12` なら、`GET /questions/12/edit` が `findUnique({ where: { id } })` で保存済みの質問を読み込み、初期値が入った編集フォームを表示します。送信すると `POST /questions/12/edit` に届きます。
+2. URL の `12` は `req.params.id` から取り出し、`readId()` で数値にします。フォームの変更内容は `req.body` から受け取ります。
+3. `db.question.update({ where: { id }, data: { title, body, categoryId } })` の `where` で更新する質問を、`data` で書き換える値を指定します。保存後に詳細ページを開き、変更が反映されたことを画面で示します。
 
-### Delete（削除）
+### Delete（削除・6点）
 
-1. 「質問を削除」を押すと `GET /questions/12/delete` で確認画面を表示します。「削除する」を押すと同じ URL に `POST` が送られます。
-2. `prisma.question.delete({ where: { id } })` で URL が指す質問を削除します。[DBの設計](prisma/schema.prisma) にある `onDelete: Cascade` によって、その質問に紐づく回答も PostgreSQL が同時に削除します。
+1. 「質問を削除」を押すと `GET /questions/12/delete` で [確認画面](views/question-delete.ejs) を表示します。確認画面のボタンを押すと、同じ URL に `POST` が送られます。
+2. URL から受け取った ID を `where: { id }` に入れ、`prisma.question.delete({ where: { id } })` で質問を削除します。
+3. [DBの設計](prisma/schema.prisma) を開き、`Answer.questionId` が所属する質問を指すことと、`onDelete: Cascade` によって質問と一緒にその回答も PostgreSQL が削除することを説明します。
 
 ### カテゴリの追加
 
-質問一覧で「カテゴリを追加」を開き、名前を入力すると `POST /categories` に送られます。`Category` テーブルに保存した項目は、質問の投稿・編集と一覧の検索フォームで選択できます。質問は `categoryId` でカテゴリとひもづきます。マイグレーションは従来の「授業」「課外活動」「その他」を登録し、既存の質問の分類も引き継ぎます。
+質問の投稿・編集フォームで「＋ カテゴリを追加」を選ぶと、新しいカテゴリ名の入力欄が表示されます。質問を保存する際に、[lib/categories.js](lib/categories.js) の `resolveCategoryId()` が既存カテゴリの ID を使うか、名前でカテゴリを作成・再利用するかを決めます。`$transaction` でまとめているので、質問の保存に失敗した場合は新規カテゴリも取り消されます。登録したカテゴリは一覧の検索でも選べます。
 
 ### スレッドと回答
 
@@ -66,10 +68,15 @@ npm start
 
 ### 5分の録画の目安
 
-1. GitHub でリポジトリを開き、公開サイトの質問フォームを見せます（約1分）。
-2. 質問を投稿し、フォームの `name` → `req.body` → `create` を示します（約1分）。
-3. 質問を編集し、URL → `req.params.id` → `where` と、変更内容が入る `data` を示します（約1分）。
-4. 回答を1件付けた質問を削除し、確認画面、`delete`、`onDelete: Cascade` の役割を示します（約2分）。
+| 時間の目安 | 画面に映すものと説明すること |
+| --- | --- |
+| 0:00〜0:30 | 公開サイトと GitHub を開く。質問フォームの入力項目を見せる。 |
+| 0:30〜1:50 | 質問を投稿する。フォームの `name` → `req.body` → 入力チェック → `db.question.create()` を示す。 |
+| 1:50〜3:10 | 同じ質問を編集する。URL → `req.params.id` → `where` と、フォーム → `req.body` → `data` を示す。 |
+| 3:10〜4:40 | 回答を1件付けた質問を削除する。確認画面の `GET` と削除の `POST`、`delete()` と `onDelete: Cascade` を示す。 |
+| 4:40〜5:00 | 一覧に戻り、質問が消えたことを見せる。 |
+
+課題の提出物は GitHub の URL、公開先 URL、約5分のソースコード解説動画の URL です。動画は自分の声で説明し、MP4 など通常の Mac 環境で再生できる形式にします。生成 AI の利用については、授業で指定されたガイドラインを確認してください。
 
 ## テスト
 

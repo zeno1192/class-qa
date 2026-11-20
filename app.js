@@ -2,20 +2,20 @@ require("dotenv").config({ quiet: true });
 
 const express = require("express");
 const path = require("node:path");
-const categoriesRouter = require("./routes/categories");
+const { NEW_CATEGORY } = require("./lib/categories");
 const questionListRouter = require("./routes/question-list");
 const questionsRouter = require("./routes/questions");
 const answersRouter = require("./routes/answers");
 
 const app = express();
 
+app.locals.newCategoryOption = NEW_CATEGORY;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(questionListRouter);
-app.use(categoriesRouter);
 app.use(questionsRouter);
 app.use(answersRouter);
 

@@ -12,16 +12,23 @@
     <input name="title" value="<%= question.title %>" maxlength="100" required>
   </label>
   <label>カテゴリ
-    <select name="category" required>
+    <select id="question-category" name="category" data-new-option="<%= newCategoryOption %>" required>
       <option value="">選択してください</option>
       <% for (const option of categories) { %>
         <option value="<%= option.id %>" <%= option.id === question.categoryId ? "selected" : "" %>><%= option.name %></option>
       <% } %>
+      <option value="<%= newCategoryOption %>" <%= question.categoryId === newCategoryOption ? "selected" : "" %>>＋ カテゴリを追加</option>
     </select>
   </label>
+  <div id="new-category-field">
+    <label>新しいカテゴリ名
+      <input id="new-category-name" name="newCategoryName" value="<%= question.newCategoryName ?? '' %>" maxlength="40">
+    </label>
+  </div>
   <label>質問内容
     <textarea name="body" rows="7" maxlength="2000" required><%= question.body %></textarea>
   </label>
   <div class="actions"><button class="primary"><%= editing ? "変更を保存" : "質問を投稿" %></button></div>
 </form>
+<script src="/question-form.js" defer></script>
 <%- include("footer") %>

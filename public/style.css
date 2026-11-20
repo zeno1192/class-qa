@@ -35,9 +35,6 @@ main { padding-block: 2rem 4rem; }
 .thread-row + .thread-row, .thread-post + .thread-post { border-top: 1px solid var(--border); }
 .filter { display: flex; flex-wrap: wrap; align-items: end; gap: .8rem; }
 .keyword { flex: 1 1 14rem; }
-.category-editor { margin-block: .75rem 1rem; }
-.category-editor summary { cursor: pointer; color: var(--accent); }
-.category-editor .actions { align-items: end; margin-top: .6rem; }
 .fields { display: grid; gap: 1rem; }
 label { display: grid; gap: .25rem; font-weight: 650; }
 input, select, textarea, button, .button {
