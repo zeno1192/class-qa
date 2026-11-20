@@ -15,10 +15,12 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   const base = "http://127.0.0.1:" + server.address().port;
   const marker = randomUUID();
   const questionIds = [];
+  const categoryIds = [];
   t.after(async () => {
     server.close();
     try {
       await prisma.question.deleteMany({ where: { id: { in: questionIds } } });
+      await prisma.category.deleteMany({ where: { id: { in: categoryIds } } });
     } finally {
       await prisma.$disconnect();
     }
@@ -67,6 +69,8 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   assert.ok(list.indexOf(newerTitle) < list.indexOf(title));
   const firstThread = await page(first);
   assert.match(firstThread, /未解決/);
+  assert.doesNotMatch(firstThread, /スレッド内の移動/);
+  assert.match(firstThread, /id="reply-form"/);
   assert.match(firstThread, /投稿 0001 へのリンク">0001/);
   assert.match(firstThread, /<strong>投稿者<\/strong>/);
   assert.match(firstThread, /name="author"[^>]*required/);
@@ -143,4 +147,45 @@ test("質問と回答の登録・表示・編集・検索・削除", async (t) =
   assert.equal((await post(first + "/delete")).status, 303);
   assert.match(await page(first, 404), /質問が見つかりません/);
   assert.equal(await prisma.answer.count({ where: { questionId } }), 0);
+
+  assert.match(await page("/"), /カテゴリを追加/);
+  const invalidCategory = await post("/categories", { name: " " });
+  assert.equal(invalidCategory.status, 400);
+  assert.match(await invalidCategory.text(), /add=category#add-category/);
+  assert.equal((await post("/categories", { name: "a".repeat(41) })).status, 400);
+
+  const categoryName = "テスト " + marker.slice(0, 16);
+  const categoryRequests = await Promise.all([
+    post("/categories", { name: categoryName }),
+    post("/categories", { name: " " + categoryName + " " }),
+  ]);
+  const addedCategory = categoryRequests.find((response) => response.status === 303);
+  if (addedCategory) {
+    const categoryLocation = new URL(addedCategory.headers.get("location"), base);
+    categoryIds.push(categoryLocation.searchParams.get("category"));
+  }
+  assert.deepEqual(categoryRequests.map((response) => response.status).sort(), [303, 409]);
+  assert.match(await page(addedCategory.headers.get("location")), /カテゴリを追加しました/);
+
+  const categoryId = categoryIds[0];
+  const newQuestionForm = await page("/questions/new");
+  assert.ok(newQuestionForm.includes('value="' + categoryId + '"'));
+  assert.ok(newQuestionForm.includes(categoryName));
+  const customCategoryQuestion = await createQuestion("追加カテゴリ " + marker, "新しい分類", categoryId);
+  assert.ok((await page(customCategoryQuestion)).includes(categoryName));
+
+  const editedCategory = await post(second + "/edit", {
+    title: newerTitle, body: "カテゴリを変更した質問", category: categoryId,
+  });
+  assert.equal(editedCategory.status, 303);
+  const editForm = await page(second + "/edit");
+  assert.ok(editForm.includes('value="' + categoryId + '" selected'));
+  const categoryResults = await page("/?category=" + categoryId + "&keyword=" + marker);
+  assert.ok(categoryResults.includes(newerTitle) && categoryResults.includes("追加カテゴリ " + marker));
+
+  const invalidQuestion = await post("/questions", {
+    title: "質問", body: "本文", author: "投稿者", category: "missing-category",
+  });
+  assert.equal(invalidQuestion.status, 400);
+  assert.match(await invalidQuestion.text(), /一覧にあるカテゴリを選んでください/);
 });

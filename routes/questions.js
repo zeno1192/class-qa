@@ -1,15 +1,17 @@
 const express = require("express");
 const prisma = require("../lib/prisma");
 const { readText, readId, notFound } = require("../lib/http");
+const { listCategories } = require("../lib/categories");
 const { readQuestionForm, questionError } = require("../lib/question-fields");
 const { readPostNumber } = require("../lib/post-number");
 const { renderQuestionThread } = require("../lib/question-thread");
 
 const router = express.Router();
 
-router.get("/questions/new", function (req, res) {
+router.get("/questions/new", async function (req, res) {
   res.render("question-form", {
-    question: { title: "", body: "", category: "", author: "" },
+    question: { title: "", body: "", categoryId: "", author: "" },
+    categories: await listCategories(),
     editing: false,
     error: "",
   });
@@ -19,12 +21,13 @@ router.get("/questions/new", function (req, res) {
 router.post("/questions", async function (req, res) {
   const question = readQuestionForm(req.body);
   const author = readText(req.body?.author);
-  const error = questionError(question) ||
+  const categories = await listCategories();
+  const error = questionError(question, categories) ||
     (!author || author.length > 40 ? "投稿者名を1〜40文字で入力してください。" : "");
 
   if (error) {
     return res.status(400).render("question-form", {
-      question: { ...question, author }, editing: false, error,
+      question: { ...question, author }, categories, editing: false, error,
     });
   }
 
@@ -48,7 +51,7 @@ router.get("/questions/:id/edit", async function (req, res) {
   const question = await prisma.question.findUnique({ where: { id } });
   if (!question) return notFound(res);
 
-  res.render("question-form", { question, editing: true, error: "" });
+  res.render("question-form", { question, categories: await listCategories(), editing: true, error: "" });
 });
 
 // Update: URL の id で質問を指定し、編集フォームにある項目だけを更新する。
@@ -57,13 +60,14 @@ router.post("/questions/:id/edit", async function (req, res) {
   if (!id) return notFound(res);
 
   const question = readQuestionForm(req.body);
-  const error = questionError(question);
+  const categories = await listCategories();
+  const error = questionError(question, categories);
   if (error) {
     const savedQuestion = await prisma.question.findUnique({ where: { id } });
     if (!savedQuestion) return notFound(res);
 
     return res.status(400).render("question-form", {
-      question: { ...question, id }, editing: true, error,
+      question: { ...question, id }, categories, editing: true, error,
     });
   }
 

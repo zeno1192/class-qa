@@ -14,8 +14,8 @@
   <label>カテゴリ
     <select name="category" required>
       <option value="">選択してください</option>
-      <% for (const [value, label] of Object.entries(categories)) { %>
-        <option value="<%= value %>" <%= value === question.category ? "selected" : "" %>><%= label %></option>
+      <% for (const option of categories) { %>
+        <option value="<%= option.id %>" <%= option.id === question.categoryId ? "selected" : "" %>><%= option.name %></option>
       <% } %>
     </select>
   </label>

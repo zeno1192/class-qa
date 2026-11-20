@@ -1,13 +1,7 @@
 <%- include("header", { title: question.title }) %>
 <a class="back" href="/">← スレッド一覧</a>
 <h1><%= question.title %></h1>
-<p class="muted"><%= categories[question.category] %> ・ <%= question.resolved ? "解決済み" : "未解決" %></p>
-<nav class="thread-nav" aria-label="スレッド内の移動">
-  <% if (question.answers.length) { %>
-    <a href="#post-<%= question.answers.at(-1).postNumber %>">最新の回答</a>
-  <% } %>
-  <a href="#reply-form">書き込む</a>
-</nav>
+<p class="muted"><%= question.category.name %> ・ <%= question.resolved ? "解決済み" : "未解決" %></p>
 <article class="panel thread-post" id="post-1" aria-label="質問">
   <%- include("post", { number: 1, post: question }) %>
   <div class="actions post-actions">

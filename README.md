@@ -25,6 +25,7 @@ npm start
 | 見たい機能 | サーバー側 | 対応する画面 |
 | --- | --- | --- |
 | 質問一覧、検索、絞り込み、並べ替え | [routes/question-list.js](routes/question-list.js) | [一覧](views/index.ejs) |
+| カテゴリの追加 | [routes/categories.js](routes/categories.js) | [一覧のカテゴリ追加フォーム](views/index.ejs) |
 | 質問の登録・編集・削除、解決状態の変更 | [routes/questions.js](routes/questions.js) | [質問フォーム](views/question-form.ejs)、[削除確認](views/question-delete.ejs) |
 | スレッド詳細と返信リンク | [lib/question-thread.js](lib/question-thread.js) | [質問詳細](views/question.ejs)、[投稿の共通表示](views/post.ejs) |
 | 回答の登録・削除 | [routes/answers.js](routes/answers.js) | [質問詳細の末尾](views/question.ejs) |
@@ -52,6 +53,10 @@ npm start
 
 1. 「質問を削除」を押すと `GET /questions/12/delete` で確認画面を表示します。「削除する」を押すと同じ URL に `POST` が送られます。
 2. `prisma.question.delete({ where: { id } })` で URL が指す質問を削除します。[DBの設計](prisma/schema.prisma) にある `onDelete: Cascade` によって、その質問に紐づく回答も PostgreSQL が同時に削除します。
+
+### カテゴリの追加
+
+質問一覧で「カテゴリを追加」を開き、名前を入力すると `POST /categories` に送られます。`Category` テーブルに保存した項目は、質問の投稿・編集と一覧の検索フォームで選択できます。質問は `categoryId` でカテゴリとひもづきます。マイグレーションは従来の「授業」「課外活動」「その他」を登録し、既存の質問の分類も引き継ぎます。
 
 ### スレッドと回答
 

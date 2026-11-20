@@ -8,10 +8,11 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-enum Category {
-  CLASS
-  EXTRACURRICULAR
-  OTHER
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique @db.VarChar(40)
+  createdAt DateTime   @default(now())
+  questions Question[]
 }
 
 model Question {
@@ -19,11 +20,14 @@ model Question {
   title          String
   body           String
   author         String
-  category       Category
+  categoryId     String
+  category       Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   resolved       Boolean  @default(false)
   createdAt      DateTime @default(now())
   lastPostNumber Int      @default(1)
   answers        Answer[]
+
+  @@index([categoryId])
 }
 
 model Answer {
